@@ -1,0 +1,16 @@
+{
+  "triggers": {
+    "double_clap": "open_amathuba",
+    "triple_clap": "open_browser",
+    "snap": "sleep_laptop"
+  },
+  "face_check_enabled": true,
+  "cooldown_seconds": 2,
+  "jarvis_responses": {
+    "armed": "Systems online. Awaiting your command.",
+    "disarmed": "Jarvis standing by.",
+    "face_not_found": "Unauthorized user detected. Ignoring command.",
+    "sleep_laptop": "Initiating sleep mode.",
+    "open_amathuba": "Opening Amathuba."
+  }
+}

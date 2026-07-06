@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local data and generated artifacts
+cleaned_student_roster.txt
+student_roster_raw.txt
+assets/voiceprint.npy
+assets/voice_training/
+assets/jarvis_temp_*.mp3
+assets/temp_*.wav
+assets/temp_verify.wav
