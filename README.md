@@ -167,7 +167,3 @@ modules/
 - `assets/voiceprint.npy` and any roster exports should be treated as local-only data.
 - Generated audio files and temporary artifacts are cleaned up by the code, but should still be excluded from version control.
 - Some actions depend on OS-level behavior such as the Windows lock screen, media keys, and screenshot saving.
-
-## License
-
-Add your preferred license before publishing to GitHub if this project is meant to be shared publicly.
