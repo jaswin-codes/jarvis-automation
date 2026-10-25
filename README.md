@@ -21,7 +21,6 @@ The system is designed to stay in the background, wait for "Hey Jarvis", verify 
 - Microphone access
 - Webcam access for face monitoring
 - A working audio output device
-- Microsoft Edge installed at the path used in `modules/actions.py`, or update that path to match your machine
 
 ## Installation
 
@@ -59,9 +58,9 @@ Then verify it with the voice tests or by running the main app.
 
 ### 3. Review app paths
 
-The browser launch path is hardcoded in [modules/actions.py](modules/actions.py). Update it if Microsoft Edge is installed elsewhere on your PC.
+Browser actions open your default browser, and the URLs live in `APPS` in [modules/actions.py](modules/actions.py).
 
-The screenshot action saves files to the Desktop path used in the code, which currently assumes a OneDrive-based University of Cape Town desktop folder. Adjust that path if needed.
+Screenshots are saved to your Desktop (the OneDrive-synced Desktop if you have one).
 
 ## Running the Assistant
 
@@ -161,6 +160,12 @@ modules/
   wake_word.py          # Hey Jarvis wake-word detector
   whistle_detector.py   # Whistle background detector
 ```
+
+## Privacy
+
+Biometric data stays on your machine: the voiceprint (`assets/voiceprint.npy`), voice training audio and roster files are gitignored, voice verification (Resemblyzer) and wake-word detection (openWakeWord) run locally, and face checks process webcam frames in memory without saving them.
+
+Two parts use online services: spoken commands are transcribed with Google's speech recognition API (via `speech_recognition`), and Jarvis's replies are synthesised with Microsoft's `edge-tts`.
 
 ## Notes
 

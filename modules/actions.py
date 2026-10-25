@@ -1,6 +1,7 @@
 import subprocess
 import os
 import time
+import webbrowser
 import pyautogui
 from modules.voice import speak
 
@@ -9,12 +10,11 @@ from modules.voice import speak
 pyautogui.FAILSAFE = True
 
 # ─────────────────────────────────────────────────────────────────────────────
-# APP PATHS — update these to match your actual install locations
+# URLS — opened in your default browser, so no install path is needed
 # ─────────────────────────────────────────────────────────────────────────────
 APPS = {
-    "amathuba"     : r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-    "browser"      : r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     "amathuba_url" : "https://amathuba.uct.ac.za",
+    "browser_url"  : "https://www.google.com",
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -25,24 +25,21 @@ APPS = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 def open_amathuba():
-    """Open Amathuba in Chrome."""
+    """Open Amathuba in the default browser."""
     try:
         speak("opening_amathuba")
-        subprocess.Popen([
-            APPS["browser"],
-            APPS["amathuba_url"]
-        ])
+        webbrowser.open(APPS["amathuba_url"])
         print("✅ Action: Opened Amathuba")
     except Exception as e:
         print(f"❌ open_amathuba failed: {e}")
 
 # ─────────────────────────────────────────────────────────────────────────────
 def open_browser():
-    """Open Microsoft Edge browser."""
+    """Open the default browser."""
     try:
         speak("double_clap")
-        subprocess.Popen([APPS["browser"]])
-        print("✅ Action: Opened Edge browser")
+        webbrowser.open(APPS["browser_url"])
+        print("✅ Action: Opened browser")
     except Exception as e:
         print(f"❌ open_browser failed: {e}")
 # ─────────────────────────────────────────────────────────────────────────────
@@ -112,8 +109,10 @@ def take_screenshot():
         speak("screenshot")
         time.sleep(0.5)
         timestamp  = time.strftime("%Y%m%d_%H%M%S")
-        desktop = os.path.join(os.path.expanduser("~"), 
-                    "OneDrive - University of Cape Town", "Desktop")
+        # OneDrive-synced desktops live under ~/OneDrive*/Desktop; fall back to ~/Desktop
+        home = os.path.expanduser("~")
+        candidates = [os.path.join(home, d, "Desktop") for d in os.listdir(home) if d.startswith("OneDrive")]
+        desktop = next((d for d in candidates if os.path.isdir(d)), os.path.join(home, "Desktop"))
         filepath   = os.path.join(desktop, f"jarvis_screenshot_{timestamp}.png")
         screenshot = pyautogui.screenshot()
         screenshot.save(filepath)
