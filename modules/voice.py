@@ -44,10 +44,6 @@ RESPONSES = {
     "task_idea"        : "Idea sent to Autobuilder.",
     "task_claude"      : "Handing it to Claude.",
     "task_failed"      : "Sorry, that task failed.",
-    "gesture_up"       : "Volume increased.",
-    "gesture_down"     : "Volume decreased.",
-    "gesture_peace"    : "Screenshot taken.",
-    "gesture_palm"     : "Playback toggled.",
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

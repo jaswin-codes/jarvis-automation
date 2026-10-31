@@ -50,6 +50,14 @@ A clap or whistle cancels a voice command that is still being listened for. Prox
 pip install -r requirements.txt
 ```
 
+4. For hand gestures, download the MediaPipe hand model (about 8 MB) to `assets/hand_landmarker.task`:
+
+```bash
+curl -L -o assets/hand_landmarker.task https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
+```
+
+Without it, Jarvis still runs and just prints that gestures are off. `requirements.txt` uses `opencv-contrib-python` rather than `opencv-python` because MediaPipe needs it; if you installed the old requirements, run `pip uninstall opencv-python` first so the two don't clash.
+
 ## Setup
 
 ### 1. Configure the app
@@ -142,6 +150,20 @@ Claude runs interactively, so it asks before risky actions. Paths are set in the
 - Short whistle: play/pause media
 - Long whistle: maximise the active window
 
+### Hand gestures
+
+Like claps, gestures only work in desk mode after "Hey Jarvis". Hold the pose for about half a second; it fires once, and you drop your hand before it can fire again.
+
+| Pose | Fingers up | Action |
+|---|---|---|
+| Point | index | Open Claude Code |
+| Peace | index + middle | Open Google Calendar |
+| Three | index + middle + ring | Open Amathuba |
+| Rock | index + pinky | Play/pause media |
+| Open palm | all five | Start a spoken Claude task (same as double clap) |
+
+Remap them in the `triggers` block of `config.json`. The webcam is opened once by a shared camera thread that the face monitor and gesture detector both read from, so the camera light stays on while Jarvis runs.
+
 ## Modes
 
 The face monitor decides whether the system is in desk mode or proximity mode.
@@ -159,6 +181,7 @@ The repository includes interactive test scripts for the major subsystems:
 - `python test_clap.py`
 - `python test_whistle.py`
 - `python test_actions.py`
+- `python test_tasks.py` and `python test_gestures.py` (no hardware needed)
 
 These scripts are useful for confirming your audio devices, camera, and action mappings before relying on the full assistant.
 
@@ -186,9 +209,11 @@ assets/
   voiceprint.npy        # Saved voiceprint used for authentication
 modules/
   actions.py            # Desktop actions triggered by commands
+  camera.py             # Shared webcam thread (face + gestures)
   clap_detector.py      # Clap/snap background detector
   face_check.py         # Background face presence monitor
-  gesture_detector.py   # Gesture-based trigger support
+  gesture_detector.py   # MediaPipe hand-pose triggers
+  tasks.py              # Routes spoken tasks to notes, Autobuilder or Claude
   voice_auth.py         # Voice verification logic
   voice.py              # Text-to-speech responses
   wake_word.py          # Hey Jarvis wake-word detector
@@ -197,7 +222,7 @@ modules/
 
 ## Privacy
 
-Biometric data stays on your machine: the voiceprint (`assets/voiceprint.npy`), voice training audio and roster files are gitignored, voice verification (Resemblyzer) and wake-word detection (openWakeWord) run locally, and face checks process webcam frames in memory without saving them.
+Biometric data stays on your machine: the voiceprint (`assets/voiceprint.npy`), voice training audio and roster files are gitignored, voice verification (Resemblyzer) and wake-word detection (openWakeWord) run locally, and face checks and hand tracking (MediaPipe) process webcam frames locally in memory without saving them.
 
 Two parts use online services: spoken commands are transcribed with Google's speech recognition API (via `speech_recognition`), and Jarvis's replies are synthesised with Microsoft's `edge-tts`.
 

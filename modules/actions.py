@@ -206,12 +206,6 @@ ACTION_MAP = {
     "open_claude"      : open_claude_code,
     "play_pause"       : play_pause_media,
     "maximize_window"  : maximize_window,
-
-    # Gesture triggers (Stage 11)
-    "gesture_up"   : volume_up,
-    "gesture_down" : volume_down,
-    "gesture_peace": take_screenshot,
-    "gesture_palm" : play_pause_media,
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

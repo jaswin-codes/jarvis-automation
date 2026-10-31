@@ -13,3 +13,4 @@ assets/voice_training/
 assets/jarvis_temp_*.mp3
 assets/temp_*.wav
 assets/temp_verify.wav
+assets/hand_landmarker.task

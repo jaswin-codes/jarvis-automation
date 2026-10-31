@@ -11,6 +11,8 @@ from modules.face_check    import BackgroundFaceMonitor
 from modules.wake_word     import WakeWordDetector
 from modules.clap_detector import ClapSnapDetector
 from modules.whistle_detector import WhistleDetector
+from modules.gesture_detector import GestureDetector
+from modules.camera        import SharedCamera
 from modules.actions       import execute
 from modules.tasks         import route_task
 
@@ -311,22 +313,27 @@ def on_clap(count):
         voice_cancelled = True   # cancel voice listener
         trigger_action(action)
 
-def on_whistle(whistle_type):
+def on_sensor_trigger(trigger_name):
+    """Whistles and hand gestures: only in desk mode, after 'Hey Jarvis'."""
     global voice_cancelled
     if not face_monitor.is_desk_mode:
-        print("  [whistle ignored — not in desk mode]")
+        print(f"  [{trigger_name} ignored — not in desk mode]")
         return
     if not system_armed:
-        print("  [whistle ignored — system not armed]")
+        print(f"  [{trigger_name} ignored — system not armed]")
         return
     voice_cancelled = True
-    trigger_action(whistle_type)
+    trigger_action(trigger_name)
 # ─────────────────────────────────────────────────────────────────────────────
 # ── Initialise all components ─────────────────────────────────────────────────
 print("\n⏳ Initialising components...\n")
 
-# Face monitor — starts background camera check every 5 seconds
-face_monitor = BackgroundFaceMonitor(check_interval=5.0)
+# One thread owns the webcam; face and gesture checks share its frames
+camera = SharedCamera()
+camera.start()
+
+# Face monitor — checks for a face every 5 seconds
+face_monitor = BackgroundFaceMonitor(camera, check_interval=5.0)
 face_monitor.start()
 
 # Give face monitor one cycle to determine mode before starting
@@ -350,8 +357,12 @@ clap_detector = ClapSnapDetector(on_detected=on_clap)
 clap_detector.start()
 
 # Whistle detector
-whistle_detector = WhistleDetector(on_detected=on_whistle)
+whistle_detector = WhistleDetector(on_detected=on_sensor_trigger)
 whistle_detector.start()
+
+# Hand gesture detector (needs mediapipe + assets/hand_landmarker.task)
+gesture_detector = GestureDetector(camera, on_detected=on_sensor_trigger)
+gesture_detector.start()
 
 # ── Startup complete ──────────────────────────────────────────────────────────
 print("\n" + "=" * 55)
