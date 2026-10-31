@@ -107,6 +107,8 @@ Say "Hey Jarvis" first, then one of the supported phrases:
 - `sleep` or `jarvis sleep`
 - `open amathuba` or `jarvis open amathuba`
 - `open browser` or `jarvis open browser`
+- `open claude` or `jarvis open claude` (empty Claude Code window)
+- `open calendar` or `jarvis open calendar` (Google Calendar)
 - `volume up` or `jarvis volume up`
 - `volume down` or `jarvis volume down`
 - `screenshot` or `jarvis screenshot`
@@ -118,8 +120,22 @@ Say "Hey Jarvis" first, then one of the supported phrases:
 ### Clap and snap triggers
 
 - 1 clap/snap: open Amathuba
-- 2 claps/snaps: open the browser
+- 2 claps/snaps: start a spoken Claude task (see below)
 - 3 claps/snaps: take a screenshot
+
+Clap and whistle actions can be remapped in the `triggers` block of `config.json`.
+
+### Spoken tasks (double clap)
+
+Say "Hey Jarvis", double clap, wait for "What's the task?", then speak for up to 20 seconds. Your voiceprint is checked, then the task is routed by its first word:
+
+| Say | What happens |
+|---|---|
+| `note ...` / `take a note ...` | Added with a timestamp to `notes_file` (default `~/Documents/jarvis-notes.md`) |
+| `idea ...` / `new idea ...` | Saved to the [Autobuilder](https://github.com/jaswin-codes/autobuilder) inbox, which plans it and builds it a stage at a time |
+| anything else | Opens Claude Code in a new window in `default_dir` with the task typed in, e.g. "remind me to email Dr Patil on Monday" uses Claude's Google Calendar connector |
+
+Claude runs interactively, so it asks before risky actions. Paths are set in the `claude` block of `config.json`.
 
 ### Whistle triggers
 
