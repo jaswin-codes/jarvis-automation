@@ -4,6 +4,24 @@ J.A.R.V.I.S. Automation is a Windows-based voice and audio control assistant tha
 
 The system is designed to stay in the background, wait for "Hey Jarvis", verify the user, and then execute commands such as opening the browser, opening Amathuba, locking the laptop, changing volume, taking screenshots, or toggling media playback.
 
+## How it works
+
+```mermaid
+flowchart LR
+    W["Wake word<br/>'Hey Jarvis'"] --> A{Armed}
+    F["Face monitor<br/>(camera, every 5 s)"] -. "desk / proximity mode" .-> G
+    A --> V["Voice command<br/>(speech recognition)"]
+    A --> C["Clap / snap"]
+    A --> H["Whistle"]
+    V --> M[Match command] --> G{"Allowed in<br/>current mode?"}
+    G --> AU["Voiceprint check"] --> X["Execute action"]
+    C --> G2{"Desk mode?"} --> X
+    H --> G2
+    X --> D["Disarm, wait for wake word"]
+```
+
+A clap or whistle cancels a voice command that is still being listened for. Proximity mode (no face at the desk) only allows lock, sleep, volume, shutdown and the mode switches.
+
 ## Features
 
 - Wake-word detection with `Hey Jarvis`
