@@ -53,7 +53,7 @@ pip install -r requirements.txt
 4. For hand gestures, download the MediaPipe hand model (about 8 MB) to `assets/hand_landmarker.task`:
 
 ```bash
-curl -L -o assets/hand_landmarker.task https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
+curl.exe -L -o assets/hand_landmarker.task https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
 ```
 
 Without it, Jarvis still runs and just prints that gestures are off. `requirements.txt` uses `opencv-contrib-python` rather than `opencv-python` because MediaPipe needs it; if you installed the old requirements, run `pip uninstall opencv-python` first so the two don't clash.
