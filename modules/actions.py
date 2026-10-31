@@ -1,9 +1,14 @@
 import subprocess
 import os
+import json
 import time
 import webbrowser
 import pyautogui
 from modules.voice import speak
+from modules.tasks import open_claude as launch_claude
+
+with open("config.json", "r") as f:
+    CLAUDE = json.load(f)["claude"]
 
 # ── Safety setting ────────────────────────────────────────────────────────────
 # Moving mouse to top-left corner will abort pyautogui actions
@@ -15,6 +20,7 @@ pyautogui.FAILSAFE = True
 APPS = {
     "amathuba_url" : "https://amathuba.uct.ac.za",
     "browser_url"  : "https://www.google.com",
+    "calendar_url" : "https://calendar.google.com",
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -42,6 +48,26 @@ def open_browser():
         print("✅ Action: Opened browser")
     except Exception as e:
         print(f"❌ open_browser failed: {e}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+def open_calendar():
+    """Open Google Calendar in the default browser."""
+    try:
+        speak("open_calendar")
+        webbrowser.open(APPS["calendar_url"])
+        print("✅ Action: Opened Google Calendar")
+    except Exception as e:
+        print(f"❌ open_calendar failed: {e}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+def open_claude_code():
+    """Open an empty Claude Code session in a new window."""
+    try:
+        speak("open_claude")
+        launch_claude("", os.path.expanduser(CLAUDE["claude_path"]),
+                      os.path.expanduser(CLAUDE["default_dir"]))
+    except Exception as e:
+        print(f"❌ open_claude_code failed: {e}")
 # ─────────────────────────────────────────────────────────────────────────────
 def lock_laptop():
     """Lock the workstation."""
@@ -175,6 +201,11 @@ ACTION_MAP = {
     "screenshot"       : take_screenshot,
     "shutdown"         : shutdown_laptop,
     "double_clap"      : open_browser,
+    "open_browser"     : open_browser,
+    "open_calendar"    : open_calendar,
+    "open_claude"      : open_claude_code,
+    "play_pause"       : play_pause_media,
+    "maximize_window"  : maximize_window,
 
     # Gesture triggers (Stage 11)
     "gesture_up"   : volume_up,
