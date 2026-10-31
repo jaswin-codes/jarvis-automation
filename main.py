@@ -153,7 +153,7 @@ def match_command(text):
     return None
 # ─────────────────────────────────────────────────────────────────────────────
 def listen_for_command(face_monitor):
-    global system_armed, listening_cmd
+    global system_armed, listening_cmd, voice_cancelled
 
     PROXIMITY_COMMANDS = {
         "locking", "sleeping", "volume_up",
