@@ -109,7 +109,7 @@ Press `Ctrl+C` to shut the system down cleanly.
 
 ### Voice commands
 
-Say "Hey Jarvis" first, then one of the supported phrases:
+Say "Hey Jarvis" and Jarvis answers "Hey Jaswin". Then say one of these short phrases (four words or fewer), or a longer sentence, which is treated as a spoken task (see below):
 
 - `lock` or `jarvis lock`
 - `sleep` or `jarvis sleep`
@@ -133,17 +133,18 @@ Say "Hey Jarvis" first, then one of the supported phrases:
 
 Clap and whistle actions can be remapped in the `triggers` block of `config.json`.
 
-### Spoken tasks (double clap)
+### Spoken tasks
 
-Say "Hey Jarvis", double clap, wait for "What's the task?", then speak for up to 20 seconds. Your voiceprint is checked, then the task is routed by its first word:
+Either say "Hey Jarvis" and then the whole sentence, or say "Hey Jarvis", double clap, wait for "What's the task?", and speak for up to 20 seconds. Your voiceprint is checked, then the task is routed by its first word:
 
 | Say | What happens |
 |---|---|
 | `note ...` / `take a note ...` | Added with a timestamp to `notes_file` (default `~/Documents/jarvis-notes.md`) |
 | `idea ...` / `new idea ...` | Saved to the [Autobuilder](https://github.com/jaswin-codes/autobuilder) inbox, which plans it and builds it a stage at a time |
+| `search ...`, `look up ...`, `open google and ...`, or a question starting `who`/`what`/`when`/`where`/`which`/`how many` | Jarvis says "Checking now", Claude opens a tab in your Chrome (via Claude in Chrome) so you can watch it search, then Jarvis speaks the answer |
 | anything else | Opens Claude Code in a new window in `default_dir` with the task typed in, e.g. "remind me to email Dr Patil on Monday" uses Claude's Google Calendar connector |
 
-Claude runs interactively, so it asks before risky actions. Paths are set in the `claude` block of `config.json`.
+Claude runs interactively, so it asks before risky actions. Web lookups run Claude headless with only the Chrome tools allowed (no shell, file edits or built-in web search) and are told to only read pages, never sign in, submit or buy. They need Chrome open with the Claude in Chrome extension connected, and take one to two minutes. Paths are set in the `claude` block of `config.json`.
 
 ### Whistle triggers
 
@@ -224,7 +225,7 @@ modules/
 
 Biometric data stays on your machine: the voiceprint (`assets/voiceprint.npy`), voice training audio and roster files are gitignored, voice verification (Resemblyzer) and wake-word detection (openWakeWord) run locally, and face checks and hand tracking (MediaPipe) process webcam frames locally in memory without saving them.
 
-Two parts use online services: spoken commands are transcribed with Google's speech recognition API (via `speech_recognition`), and Jarvis's replies are synthesised with Microsoft's `edge-tts`.
+Two parts use online services: spoken commands are transcribed with Google's speech recognition API (via `speech_recognition`), and Jarvis's replies are synthesised with Microsoft's `edge-tts`. Web lookups and Claude tasks send the transcribed text to Claude.
 
 ## Notes
 
