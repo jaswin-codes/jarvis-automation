@@ -33,7 +33,8 @@ class SharedCamera:
             return None if self._frame is None else self._frame.copy()
 
     def _capture_loop(self):
-        cap = cv2.VideoCapture(self.index)
+        # DirectShow: the default MSMF backend takes ~13s per open/resize here and can stall
+        cap = cv2.VideoCapture(self.index, cv2.CAP_DSHOW)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
         if not cap.isOpened():
