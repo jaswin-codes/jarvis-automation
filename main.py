@@ -72,6 +72,7 @@ COMMAND_MAP = {
     "jarvis stop"         : "disarmed",
     "deactivate"          : "disarmed",
 }
+MAX_COMMAND_WORDS = 4   # anything longer after "Hey Jarvis" is routed as a task
 
 # ─────────────────────────────────────────────────────────────────────────────
 def jarvis_speak(key):
@@ -145,6 +146,10 @@ def match_command(text):
     if text in COMMAND_MAP:
         return COMMAND_MAP[text]
 
+    # Longer sentences are tasks, not commands: "what's my sleep schedule" mustn't sleep the laptop
+    if len(text.split()) > MAX_COMMAND_WORDS:
+        return None
+
     # Partial match
     for key in COMMAND_MAP:
         if key in text:
@@ -207,7 +212,7 @@ def listen_for_task():
         text = recogniser.recognize_google(audio)
         print(f"  [task: '{text}']")
         if voice_matches(audio):
-            jarvis_speak(route_task(text, config))
+            jarvis_speak(route_task(text, config, say=jarvis_speak))
 
     except sr.WaitTimeoutError:
         print("⏱️  No task heard\n")
@@ -221,7 +226,7 @@ def listen_for_task():
 
 # ─────────────────────────────────────────────────────────────────────────────
 def listen_for_command(face_monitor):
-    global system_armed, listening_cmd, voice_cancelled
+    global system_armed, listening_cmd, voice_cancelled, task_active
 
     PROXIMITY_COMMANDS = {
         "locking", "sleeping", "volume_up",
@@ -234,7 +239,7 @@ def listen_for_command(face_monitor):
     with sr.Microphone() as source:
         recogniser.adjust_for_ambient_noise(source, duration=0.1)
         try:
-            audio = recogniser.listen(source, timeout=3, phrase_time_limit=4)
+            audio = recogniser.listen(source, timeout=3, phrase_time_limit=12)
 
             # Check immediately if trigger already fired during listening
             if voice_cancelled:
@@ -242,13 +247,25 @@ def listen_for_command(face_monitor):
                 return
             text   = recogniser.recognize_google(audio)
             action = match_command(text)
+            is_desk = face_monitor.is_desk_mode
 
             if not action:
-                print("❓ Command not recognised\n")
-                jarvis_speak("not_understood")
+                # Not a known command: treat the sentence as a spoken task
+                if len(text.split()) <= MAX_COMMAND_WORDS:
+                    print("❓ Command not recognised\n")
+                    jarvis_speak("not_understood")
+                    return
+                if not is_desk:
+                    print("⚠️  Spoken tasks need desk mode\n")
+                    return
+                if voice_matches(audio):
+                    task_active = True
+                    try:
+                        jarvis_speak(route_task(text, config, say=jarvis_speak))
+                    finally:
+                        task_active = False
                 return
 
-            is_desk = face_monitor.is_desk_mode
             if not is_desk and action not in PROXIMITY_COMMANDS:
                 print(f"⚠️  '{action}' not available in proximity mode\n")
                 return
