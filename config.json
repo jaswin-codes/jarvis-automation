@@ -1,8 +1,21 @@
 {
   "triggers": {
-    "double_clap": "open_amathuba",
-    "triple_clap": "open_browser",
-    "snap": "sleep_laptop"
+    "single_clap": "opening_amathuba",
+    "double_clap": "claude_task",
+    "triple_clap": "screenshot",
+    "short_whistle": "play_pause",
+    "long_whistle": "maximize_window",
+    "gesture_point": "open_claude",
+    "gesture_peace": "open_calendar",
+    "gesture_three": "opening_amathuba",
+    "gesture_rock": "play_pause",
+    "gesture_palm": "claude_task"
+  },
+  "claude": {
+    "claude_path": "~/.local/bin/claude.exe",
+    "default_dir": "~",
+    "notes_file": "~/Documents/jarvis-notes.md",
+    "autobuilder_inbox": "~/Downloads/autobuilder/inbox"
   },
   "face_check_enabled": true,
   "cooldown_seconds": 2,

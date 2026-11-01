@@ -11,7 +11,10 @@ from modules.face_check    import BackgroundFaceMonitor
 from modules.wake_word     import WakeWordDetector
 from modules.clap_detector import ClapSnapDetector
 from modules.whistle_detector import WhistleDetector
+from modules.gesture_detector import GestureDetector
+from modules.camera        import SharedCamera
 from modules.actions       import execute
+from modules.tasks         import route_task
 
 print("=" * 55)
 print("         J.A.R.V.I.S  —  Starting up")
@@ -29,6 +32,7 @@ cooldown_active  = False
 jarvis_speaking  = False
 _speak_lock      = threading.Lock()
 voice_cancelled = False
+task_active      = False   # True while listening for a spoken Claude task
 last_action_time = 0
 COOLDOWN_SECS    = config.get("cooldown_seconds", 2)
 
@@ -46,8 +50,12 @@ COMMAND_MAP = {
     "jarvis sleep"        : "sleeping",
     "open amathuba"       : "opening_amathuba",
     "jarvis open amathuba": "opening_amathuba",
-    "open browser"        : "double_clap",
-    "jarvis open browser" : "double_clap",
+    "open browser"        : "open_browser",
+    "jarvis open browser" : "open_browser",
+    "open claude"         : "open_claude",
+    "jarvis open claude"  : "open_claude",
+    "open calendar"       : "open_calendar",
+    "jarvis open calendar": "open_calendar",
     "volume up"           : "volume_up",
     "jarvis volume up"    : "volume_up",
     "volume down"         : "volume_down",
@@ -88,7 +96,10 @@ def trigger_action(action_key):
     Central action dispatcher.
     Checks cooldown, then executes the action.
     """
-    global last_action_time, system_armed, silent_mode
+    global last_action_time, system_armed, silent_mode, task_active
+
+    # Clap/whistle/gesture triggers are remapped in config.json "triggers"
+    action_key = config.get("triggers", {}).get(action_key, action_key)
 
     if not can_trigger():
         print(f"⏳ Cooldown active — ignoring: {action_key}")
@@ -112,6 +123,13 @@ def trigger_action(action_key):
         silent_mode = False
         speak("systems_online")
         print("🔊 Vocal mode ON")
+        return
+
+    if action_key == "claude_task":
+        if task_active:
+            return
+        task_active = True
+        threading.Thread(target=listen_for_task, daemon=True).start()
         return
 
     # ── Execute real action ───────────────────────────────────────────────────
@@ -140,7 +158,10 @@ def match_command(text):
         "amathuba" : "opening_amathuba",
         "lock"     : "locking",
         "sleep"    : "sleeping",
-        "browser"  : "double_clap",
+        "browser"  : "open_browser",
+        "claude"   : "open_claude",
+        "clawed"   : "open_claude",
+        "calendar" : "open_calendar",
         "volume"   : "volume_up",
         "screenshot": "screenshot",
     }
@@ -151,6 +172,53 @@ def match_command(text):
             return action
 
     return None
+# ─────────────────────────────────────────────────────────────────────────────
+def voice_matches(audio):
+    """Check the speaker against the saved voiceprint."""
+    print("🔐 Verifying voice...")
+    raw_data = audio.get_raw_data(
+        convert_rate  = 16000,
+        convert_width = 2
+    )
+    audio_np        = np.frombuffer(raw_data, dtype=np.int16)
+    is_match, score = verify_voice(audio_data=audio_np)
+    print(f"   Voice similarity: {score:.2f}")
+
+    if not is_match:
+        print("🔴 Voice not recognised — command rejected\n")
+        jarvis_speak("face_not_found")
+    return is_match
+
+# ─────────────────────────────────────────────────────────────────────────────
+def listen_for_task():
+    """
+    Double clap → speak a task (up to 20 s) → route it to notes,
+    Autobuilder or a Claude Code window.
+    """
+    global task_active
+
+    try:
+        jarvis_speak("task_prompt")
+        print("🎙️  Listening for a task...\n")
+        with sr.Microphone() as source:
+            recogniser.adjust_for_ambient_noise(source, duration=0.1)
+            audio = recogniser.listen(source, timeout=5, phrase_time_limit=20)
+
+        text = recogniser.recognize_google(audio)
+        print(f"  [task: '{text}']")
+        if voice_matches(audio):
+            jarvis_speak(route_task(text, config))
+
+    except sr.WaitTimeoutError:
+        print("⏱️  No task heard\n")
+    except sr.UnknownValueError:
+        print("❓ Could not understand the task\n")
+        jarvis_speak("not_understood")
+    except sr.RequestError as e:
+        print(f"⚠️  Speech error: {e}\n")
+    finally:
+        task_active = False
+
 # ─────────────────────────────────────────────────────────────────────────────
 def listen_for_command(face_monitor):
     global system_armed, listening_cmd, voice_cancelled
@@ -185,18 +253,7 @@ def listen_for_command(face_monitor):
                 print(f"⚠️  '{action}' not available in proximity mode\n")
                 return
 
-            print("🔐 Verifying voice...")
-            raw_data = audio.get_raw_data(
-                convert_rate  = 16000,
-                convert_width = 2
-            )
-            audio_np        = np.frombuffer(raw_data, dtype=np.int16)
-            is_match, score = verify_voice(audio_data=audio_np)
-            print(f"   Voice similarity: {score:.2f}")
-
-            if not is_match:
-                print("🔴 Voice not recognised — command rejected\n")
-                jarvis_speak("face_not_found")
+            if not voice_matches(audio):
                 return
 
             print(f"🟢 Voice verified! Executing: {action}\n")
@@ -220,7 +277,7 @@ def listen_for_command(face_monitor):
 def on_wake_word():
     global system_armed, listening_cmd
 
-    if jarvis_speaking or listening_cmd:
+    if jarvis_speaking or listening_cmd or task_active:
         print("  [wake word ignored — system busy]")
         return
 
@@ -256,22 +313,27 @@ def on_clap(count):
         voice_cancelled = True   # cancel voice listener
         trigger_action(action)
 
-def on_whistle(whistle_type):
+def on_sensor_trigger(trigger_name):
+    """Whistles and hand gestures: only in desk mode, after 'Hey Jarvis'."""
     global voice_cancelled
     if not face_monitor.is_desk_mode:
-        print("  [whistle ignored — not in desk mode]")
+        print(f"  [{trigger_name} ignored — not in desk mode]")
         return
     if not system_armed:
-        print("  [whistle ignored — system not armed]")
+        print(f"  [{trigger_name} ignored — system not armed]")
         return
     voice_cancelled = True
-    trigger_action(whistle_type)
+    trigger_action(trigger_name)
 # ─────────────────────────────────────────────────────────────────────────────
 # ── Initialise all components ─────────────────────────────────────────────────
 print("\n⏳ Initialising components...\n")
 
-# Face monitor — starts background camera check every 5 seconds
-face_monitor = BackgroundFaceMonitor(check_interval=5.0)
+# One thread owns the webcam; face and gesture checks share its frames
+camera = SharedCamera()
+camera.start()
+
+# Face monitor — checks for a face every 5 seconds
+face_monitor = BackgroundFaceMonitor(camera, check_interval=5.0)
 face_monitor.start()
 
 # Give face monitor one cycle to determine mode before starting
@@ -295,8 +357,12 @@ clap_detector = ClapSnapDetector(on_detected=on_clap)
 clap_detector.start()
 
 # Whistle detector
-whistle_detector = WhistleDetector(on_detected=on_whistle)
+whistle_detector = WhistleDetector(on_detected=on_sensor_trigger)
 whistle_detector.start()
+
+# Hand gesture detector (needs mediapipe + assets/hand_landmarker.task)
+gesture_detector = GestureDetector(camera, on_detected=on_sensor_trigger)
+gesture_detector.start()
 
 # ── Startup complete ──────────────────────────────────────────────────────────
 print("\n" + "=" * 55)
