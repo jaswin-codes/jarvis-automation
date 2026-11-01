@@ -8,11 +8,25 @@ import time
 # After a double clap, whatever you say is routed by its first words:
 #   "note ..."  → appended to a markdown notes file (no AI, instant)
 #   "idea ..."  → dropped into the Autobuilder inbox to be planned and built
+#   "search ...", "who/what/when ..." → Claude looks it up in Chrome and
+#                   Jarvis speaks the answer
 #   anything else → opens Claude Code in a new window with the task typed in
 # ─────────────────────────────────────────────────────────────────────────────
 
 NOTE_PREFIXES = ("take a note", "make a note", "note that", "note")
 IDEA_PREFIXES = ("new idea", "idea")
+WEB_PREFIXES  = ("open google and", "open google", "google", "search for", "search",
+                 "look up", "find out", "check", "who", "what", "when", "where",
+                 "which", "how many", "how much")
+# The answer comes back as stdout and is spoken, so keep it short and plain
+WEB_PROMPT = (
+    "You are Jarvis, my voice assistant. This request was spoken and transcribed "
+    "by speech recognition, so words may be misheard. Answer it using the Chrome "
+    "browser tools in a new tab so I can watch. Only read pages: never sign in, "
+    "submit forms, buy, post or download anything. Reply with only the answer as "
+    "one or two short spoken sentences, with no markdown, lists or links.\n\nRequest: "
+)
+WEB_TIMEOUT = 240   # seconds before giving up on a browser lookup
 
 CLAUDE_PREAMBLE = (
     "This task was spoken to my Jarvis assistant and transcribed by speech "
@@ -24,7 +38,7 @@ CLAUDE_PREAMBLE = (
 def parse_task(text):
     """
     Split spoken text into (kind, body).
-    kind is "note", "idea" or "claude".
+    kind is "note", "idea", "web" or "claude".
     """
     text  = text.strip()
     lower = text.lower()
@@ -32,6 +46,9 @@ def parse_task(text):
         for prefix in prefixes:
             if re.match(rf"{prefix}\b", lower):
                 return kind, text[len(prefix):].lstrip(" :,.-")
+    # Web lookups keep the whole sentence: "who is playing" reads better than "is playing"
+    if any(re.match(rf"{prefix}\b", lower) for prefix in WEB_PREFIXES):
+        return "web", text
     return "claude", text
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -71,8 +88,31 @@ def open_claude(task, claude_path, work_dir):
     print(f"✅ Claude Code opened in {work_dir}")
 
 # ─────────────────────────────────────────────────────────────────────────────
-def route_task(text, config):
-    """Route a spoken task. Returns the kind so the caller can speak a reply."""
+def ask_web(question, claude_path, work_dir):
+    """
+    Run Claude headless with Claude in Chrome and return its spoken answer.
+    Only the browser tools are allowed; shell and file edits are blocked.
+    """
+    result = subprocess.run(
+        [claude_path, "-p", WEB_PROMPT + question, "--chrome",
+         "--allowedTools", "mcp__claude-in-chrome",
+         # WebSearch/WebFetch off so it uses the Chrome tab you can watch
+         "--disallowedTools", "Bash,Edit,Write,NotebookEdit,WebSearch,WebFetch"],
+        cwd=work_dir, capture_output=True, text=True, encoding="utf-8",
+        timeout=WEB_TIMEOUT, creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+    answer = result.stdout.strip()
+    if result.returncode != 0 or not answer:
+        raise RuntimeError(f"claude exited {result.returncode}: {result.stderr.strip()[:200]}")
+    print(f"✅ Web answer: {answer}")
+    return answer
+
+# ─────────────────────────────────────────────────────────────────────────────
+def route_task(text, config, say=print):
+    """
+    Route a spoken task. Returns what Jarvis should say next: a voice line key,
+    or for web lookups the answer itself. say() is used for "checking now".
+    """
     kind, body = parse_task(text)
     paths = config["claude"]
     try:
@@ -80,6 +120,10 @@ def route_task(text, config):
             save_note(body, os.path.expanduser(paths["notes_file"]))
         elif kind == "idea":
             save_idea(body, os.path.expanduser(paths["autobuilder_inbox"]))
+        elif kind == "web":
+            say("task_web")
+            return ask_web(body, os.path.expanduser(paths["claude_path"]),
+                           os.path.expanduser(paths["default_dir"]))
         else:
             open_claude(body, os.path.expanduser(paths["claude_path"]),
                         os.path.expanduser(paths["default_dir"]))

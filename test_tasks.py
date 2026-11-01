@@ -9,6 +9,11 @@ assert parse_task("notebook pages are messy") == ("claude", "notebook pages are 
 assert parse_task("New idea, a plant watering robot") == ("idea", "a plant watering robot")
 assert parse_task("idealism essay") == ("claude", "idealism essay")
 assert parse_task("remind me to email Dr Patil on Monday") == ("claude", "remind me to email Dr Patil on Monday")
+assert parse_task("open google and search who is playing the NBA match today") == \
+    ("web", "open google and search who is playing the NBA match today")
+assert parse_task("What's the weather in Cape Town") == ("web", "What's the weather in Cape Town")
+assert parse_task("whoever wrote this code fix it") == ("claude", "whoever wrote this code fix it")
+assert parse_task("checkout the jarvis repo and add tests")[0] == "claude"
 
 assert idea_filename("A plant-watering robot with ESP32") == "a-plant-watering-robot"
 assert idea_filename("...") == "idea"

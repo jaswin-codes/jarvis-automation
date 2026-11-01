@@ -35,7 +35,7 @@ RESPONSES = {
     "screenshot"       : "Screenshot captured.",
     "not_understood"   : "I did not understand that. Please try again.",
     "cooldown"         : "System cooling down. Please wait.",
-    "armed"            : "Jarvis armed. Listening for commands.",
+    "armed"            : "Hey Jaswin.",
     "disarmed"         : "Jarvis disarmed.",
     "open_calendar"    : "Opening your calendar.",
     "open_claude"      : "Opening Claude Code.",
@@ -43,6 +43,7 @@ RESPONSES = {
     "task_note"        : "Noted.",
     "task_idea"        : "Idea sent to Autobuilder.",
     "task_claude"      : "Handing it to Claude.",
+    "task_web"         : "Checking now.",
     "task_failed"      : "Sorry, that task failed.",
 }
 
