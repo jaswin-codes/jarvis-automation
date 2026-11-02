@@ -24,7 +24,8 @@ WEB_PROMPT = (
     "by speech recognition, so words may be misheard. Answer it using the Chrome "
     "browser tools in a new tab so I can watch. Only read pages: never sign in, "
     "submit forms, buy, post or download anything. Reply with only the answer as "
-    "one or two short spoken sentences, with no markdown, lists or links.\n\nRequest: "
+    "one or two short spoken sentences of at most 25 words total, with no markdown, "
+    "lists or links. If there are many results, name the top few and say how many more.\n\nRequest: "
 )
 WEB_TIMEOUT = 240   # seconds before giving up on a browser lookup
 
@@ -88,13 +89,15 @@ def open_claude(task, claude_path, work_dir):
     print(f"✅ Claude Code opened in {work_dir}")
 
 # ─────────────────────────────────────────────────────────────────────────────
-def ask_web(question, claude_path, work_dir):
+def ask_web(question, claude_path, work_dir, model=None):
     """
     Run Claude headless with Claude in Chrome and return its spoken answer.
     Only the browser tools are allowed; shell and file edits are blocked.
+    model picks a faster model than the default (None = Claude's default).
     """
     result = subprocess.run(
         [claude_path, "-p", WEB_PROMPT + question, "--chrome",
+         *(["--model", model] if model else []),
          "--allowedTools", "mcp__claude-in-chrome",
          # WebSearch/WebFetch off so it uses the Chrome tab you can watch
          "--disallowedTools", "Bash,Edit,Write,NotebookEdit,WebSearch,WebFetch"],
@@ -123,7 +126,8 @@ def route_task(text, config, say=print):
         elif kind == "web":
             say("task_web")
             return ask_web(body, os.path.expanduser(paths["claude_path"]),
-                           os.path.expanduser(paths["default_dir"]))
+                           os.path.expanduser(paths["default_dir"]),
+                           paths.get("web_model"))
         else:
             open_claude(body, os.path.expanduser(paths["claude_path"]),
                         os.path.expanduser(paths["default_dir"]))
