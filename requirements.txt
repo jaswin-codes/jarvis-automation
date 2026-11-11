@@ -30,7 +30,7 @@ matplotlib==3.10.8
 MouseInfo==0.1.3
 mpmath==1.3.0
 msgpack==1.1.2
-multidict==6.7.1
+multidict==7.2.1
 networkx==3.6.1
 numba==0.65.0
 numpy==2.4.4
