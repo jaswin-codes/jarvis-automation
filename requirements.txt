@@ -29,7 +29,7 @@ MarkupSafe==3.0.3
 matplotlib==3.10.8
 MouseInfo==0.1.3
 mpmath==1.3.0
-msgpack==1.1.2
+msgpack==1.2.3
 multidict==6.7.1
 networkx==3.6.1
 numba==0.65.0
