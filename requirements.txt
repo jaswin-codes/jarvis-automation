@@ -1,9 +1,9 @@
 aiohappyeyeballs==2.6.1
-aiohttp==3.13.5
+aiohttp==3.14.4
 aiosignal==1.4.0
 attrs==26.1.0
 audioread==3.1.0
-certifi==2026.2.25
+certifi==2026.10.18
 cffi==2.0.0
 charset-normalizer==3.4.6
 clap-detector==2.0.7
@@ -13,12 +13,12 @@ contourpy==1.3.3
 cycler==0.12.1
 decorator==5.2.1
 edge-tts==7.2.8
-filelock==3.25.2
+filelock==4.2.1
 flatbuffers==25.12.19
 fonttools==4.62.1
 frozenlist==1.8.0
-fsspec==2026.3.0
-idna==3.11
+fsspec==2026.6.0
+idna==3.15
 Jinja2==3.1.6
 joblib==1.5.3
 kiwisolver==1.5.0
@@ -29,8 +29,8 @@ MarkupSafe==3.0.3
 matplotlib==3.10.8
 MouseInfo==0.1.3
 mpmath==1.3.0
-msgpack==1.1.2
-multidict==6.7.1
+msgpack==1.2.3
+multidict==6.9.1
 networkx==3.6.1
 numba==0.65.0
 numpy==2.4.4
@@ -39,7 +39,7 @@ onnxruntime==1.24.4
 opencv-contrib-python==4.13.0.92
 openwakeword==0.6.0
 packaging==26.0
-pillow==12.2.0
+pillow==12.3.0
 platformdirs==4.9.4
 playsound==1.2.2
 pooch==1.9.0
@@ -78,6 +78,6 @@ torch==2.11.0
 tqdm==4.67.3
 typing==3.7.4.3
 typing_extensions==4.15.0
-urllib3==2.6.3
+urllib3==2.8.0
 webrtcvad-wheels==2.0.14
 yarl==1.23.0
